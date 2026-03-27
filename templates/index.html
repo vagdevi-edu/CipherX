@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CipherX Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  display: flex;
+  background: #0f172a;
+  color: white;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 240px;
+  height: 100vh;
+  background: linear-gradient(180deg,#020617,#1e293b);
+  padding: 20px;
+  position: fixed;
+}
+
+.sidebar h2 {
+  color: #38bdf8;
+  margin-bottom: 30px;
+}
+
+.sidebar a {
+  display: block;
+  margin: 15px 0;
+  text-decoration: none;
+  color: #cbd5f5;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.sidebar a:hover {
+  background: rgba(56,189,248,0.2);
+}
+
+/* MAIN */
+.main {
+  margin-left: 240px;
+  padding: 30px;
+  width: 100%;
+}
+
+/* HEADER */
+.header {
+  font-size: 28px;
+  margin-bottom: 20px;
+}
+
+/* GRID */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(320px,1fr));
+  gap: 20px;
+}
+
+/* CARD */
+.card {
+  background: rgba(255,255,255,0.05);
+  padding: 20px;
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+  transition: 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+/* INPUT */
+textarea, input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  border-radius: 8px;
+  border: none;
+}
+
+/* BUTTON */
+button {
+  margin-top: 10px;
+  padding: 10px;
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg,#22c55e,#16a34a);
+  color: white;
+  cursor: pointer;
+}
+
+/* OUTPUT */
+.output {
+  margin-top: 10px;
+  padding: 10px;
+  background: #020617;
+  border-radius: 8px;
+}
+
+/* SECTION */
+.section {
+  margin-bottom: 40px;
+}
+
+/* MOBILE */
+@media(max-width:768px){
+  .sidebar {
+    display: none;
+  }
+  .main {
+    margin-left: 0;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <h2>🔐 CipherX</h2>
+  <a href="#home">🏠 Home</a>
+  <a href="#algorithms">📚 Algorithms</a>
+  <a href="#tool">🛠 Tool</a>
+  <a href="#analytics">📊 Analytics</a>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- HOME -->
+<div id="home" class="section">
+  <div class="header">Dashboard</div>
+  <p>Welcome to CipherX — Secure Encryption Platform</p>
+</div>
+
+<!-- ALGORITHMS -->
+<div id="algorithms" class="section">
+  <div class="header">Algorithms</div>
+  <div class="grid">
+    <div class="card"><h3>Caesar Cipher</h3><p>Simple substitution encryption.</p></div>
+    <div class="card"><h3>DES</h3><p>Symmetric block cipher.</p></div>
+    <div class="card"><h3>RSA</h3><p>Public-key encryption system.</p></div>
+  </div>
+</div>
+
+<!-- TOOL -->
+<div id="tool" class="section">
+  <div class="header">Encryption Tool</div>
+
+  <div class="grid">
+
+    <!-- Caesar -->
+    <div class="card">
+      <h3>Caesar</h3>
+      <textarea id="cText"></textarea>
+      <input id="shift" placeholder="Shift">
+      <button onclick="run('caesar','encrypt')">Encrypt</button>
+      <button onclick="run('caesar','decrypt')">Decrypt</button>
+      <div class="output" id="cEnc"></div>
+      <div class="output" id="cDec"></div>
+    </div>
+
+    <!-- DES -->
+    <div class="card">
+      <h3>DES</h3>
+      <textarea id="dText"></textarea>
+      <button onclick="run('des','encrypt')">Encrypt</button>
+      <button onclick="run('des','decrypt')">Decrypt</button>
+      <div class="output" id="dEnc"></div>
+      <div class="output" id="dDec"></div>
+    </div>
+
+    <!-- RSA -->
+    <div class="card">
+      <h3>RSA</h3>
+      <textarea id="rText"></textarea>
+      <button onclick="run('rsa','encrypt')">Encrypt</button>
+      <button onclick="run('rsa','decrypt')">Decrypt</button>
+      <div class="output" id="rEnc"></div>
+      <div class="output" id="rDec"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ANALYTICS -->
+<div id="analytics" class="section">
+  <div class="header">Analytics</div>
+  <canvas id="chart"></canvas>
+</div>
+
+</div>
+
+<script>
+let usage = {caesar:0,des:0,rsa:0};
+
+function run(type, mode){
+  let text, shift=0;
+
+  if(type==='caesar'){
+    text = cText.value;
+    shift = shiftInput = document.getElementById("shift").value;
+  } else if(type==='des'){
+    text = dText.value;
+  } else {
+    text = rText.value;
+  }
+
+  fetch(`/${type}`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({text,shift,mode})
+  })
+  .then(res=>res.json())
+  .then(data=>{
+    document.getElementById(type[0]+"Enc").innerText="Encrypted: "+data.encrypted;
+    document.getElementById(type[0]+"Dec").innerText="Decrypted: "+data.decrypted;
+
+    usage[type]++;
+    updateChart();
+  });
+}
+
+// Chart
+let chart = new Chart(document.getElementById("chart"),{
+  type:"bar",
+  data:{
+    labels:["Caesar","DES","RSA"],
+    datasets:[{label:"Usage",data:[0,0,0]}]
+  }
+});
+
+function updateChart(){
+  chart.data.datasets[0].data=[usage.caesar,usage.des,usage.rsa];
+  chart.update();
+}
+</script>
+
+</body>
+</html>
